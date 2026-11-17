@@ -1,0 +1,377 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Near-black page, deep-blue water, one light-blue accent */
+  --color-bg: #06080c;
+  --color-surface: #0b0f16;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-ink: #e8ecf2;
+  --color-muted: #8a94a6;
+  --color-accent: #7fb4ff;
+  --color-deep: #04162e;
+  --color-water: #0a2f5c;
+
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-code);
+
+  /* Motion tokens (CSS side). JS side lives in src/lib/motion.ts */
+  --ease-flow: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-liquid: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root {
+  --dur-fast: 0.4s;
+  --dur-base: 0.9s;
+  --dur-slow: 1.4s;
+  --gutter: clamp(1.25rem, 5vw, 4.5rem);
+}
+
+/*
+ * Fluid scale. Every size on the site is in rem, and above a 1440px-wide
+ * window the root font size grows with the viewport (16px at 1440, 28px at
+ * 2560, and so on), so large screens show the laptop layout, just bigger.
+ * Below 1440 it stays at the user's own font size and the layout reflows.
+ */
+html {
+  background: var(--color-bg);
+  color-scheme: dark;
+}
+@media (min-width: 1440px) {
+  html {
+    font-size: 1.11111vw; /* 16px at 1440 */
+  }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Small mono label used for section numbers and metadata */
+.label {
+  font-family: var(--font-code), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.wrap {
+  padding-inline: var(--gutter);
+  margin-inline: auto;
+  max-width: 87.5rem;
+}
+
+/* Hero lines rise from behind a mask on load (CSS, so there is no flash before hydration) */
+.line-mask {
+  display: block;
+  overflow: hidden;
+}
+.line-mask > span {
+  display: inline-block;
+  transform: translateY(110%);
+  animation: line-rise var(--dur-slow) var(--ease-flow) forwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes line-rise {
+  to {
+    transform: none;
+  }
+}
+
+/* Split lines: room for descenders inside the mask when leading is tight */
+.split-line-mask {
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+/* Rolling letters: each letter slides up to a copy of itself on group hover */
+.roll-c {
+  display: inline-block;
+  overflow: hidden;
+  height: 1.25em;
+  line-height: 1.25;
+  vertical-align: top;
+}
+.roll-c > span {
+  display: block;
+  transition: transform 0.6s var(--ease-flow);
+  transition-delay: calc(var(--i) * 25ms);
+}
+@media (hover: hover) {
+  .group:hover .roll-c > span {
+    transform: translateY(-100%);
+  }
+
+  /* Stack tags light up one after another */
+  /* Resting tags stay at full opacity in the muted colour, so they still pass contrast */
+  .tag {
+    transition:
+      background-color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease,
+      color var(--dur-fast) ease;
+    transition-delay: calc(var(--i) * 40ms);
+  }
+  .group:hover .tag {
+    color: var(--color-ink);
+    background-color: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.22);
+  }
+}
+
+/* Custom cursor: a dot trailing the pointer */
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) ease;
+  mix-blend-mode: difference;
+}
+.cursor.is-on {
+  opacity: 1;
+}
+.cursor-dot {
+  display: grid;
+  place-items: center;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin: -0.3125rem 0 0 -0.3125rem;
+  border-radius: 999px;
+  background: var(--color-ink);
+  transition:
+    width var(--dur-fast) var(--ease-flow),
+    height var(--dur-fast) var(--ease-flow),
+    margin var(--dur-fast) var(--ease-flow);
+}
+.cursor-dot > span {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-bg);
+  opacity: 0;
+  transition: opacity var(--dur-fast) ease;
+}
+.cursor.is-link .cursor-dot {
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -1.375rem 0 0 -1.375rem;
+}
+.cursor.is-view {
+  mix-blend-mode: normal;
+}
+.cursor.is-view .cursor-dot {
+  width: 5.25rem;
+  height: 5.25rem;
+  margin: -2.625rem 0 0 -2.625rem;
+  background: var(--color-accent);
+}
+.cursor.is-view .cursor-dot > span {
+  opacity: 1;
+}
+
+/* Film grain over everything, very low opacity */
+.grain {
+  position: fixed;
+  inset: -7.5rem;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.9s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3.75rem, 2.5rem); }
+  40% { transform: translate(3.125rem, -4.375rem); }
+  60% { transform: translate(-5rem, -1.875rem); }
+  80% { transform: translate(4.375rem, 3.75rem); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Deep water stand-in for the hero and contact until the WebGL layer lands */
+.water-still {
+  background:
+    radial-gradient(120% 90% at 50% 68%, rgb(10 47 92 / 0.9) 0%, rgb(4 22 46 / 0.85) 42%, transparent 78%),
+    var(--color-bg);
+}
+
+/*
+ * WebGL handover. When the canvas is running (<html data-gl>), the marked
+ * elements keep their place in the layout but stop painting; the canvas draws
+ * water, screens and the portrait at their positions instead.
+ */
+html[data-gl] .water-still {
+  background: none;
+}
+html[data-gl] [data-gl-text] {
+  color: transparent;
+}
+html[data-gl] [data-gl-plane] {
+  background-image: none !important;
+  background-color: transparent;
+  border-color: transparent;
+}
+html[data-gl] [data-gl="portrait"] {
+  border-color: transparent;
+}
+html[data-gl] [data-gl-plane] > *,
+html[data-gl] [data-gl="portrait"] > * {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-mask > span {
+    animation: none;
+    transform: none;
+  }
+  .grain {
+    animation: none;
+  }
+  .roll-c > span,
+  .tag {
+    transition: none;
+  }
+}
+
+/* Message in a bottle: floats on the contact water */
+.bottle {
+  position: absolute;
+  right: clamp(1rem, 9vw, 9rem);
+  bottom: 15%;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+  transform-origin: 50% 70%;
+  animation: bob 5s ease-in-out infinite;
+}
+.bottle svg {
+  width: clamp(2.5rem, 3.4vw, 3.25rem);
+  margin-inline: auto;
+  transform: rotate(16deg);
+  transition: transform var(--dur-fast) var(--ease-flow);
+}
+.bottle:hover svg {
+  transform: rotate(4deg) scale(1.08);
+}
+.bottle.is-sent {
+  pointer-events: none;
+  animation: drift 3.4s var(--ease-liquid) forwards;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-0.6rem) rotate(5deg); }
+}
+@keyframes drift {
+  to { transform: translate(38vw, -1.5rem) rotate(38deg); opacity: 0; }
+}
+.bottle-note {
+  position: absolute;
+  inset-inline: 1rem;
+  bottom: 4rem;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.bottle-note.is-on {
+  opacity: 1;
+}
+.bottle-dialog {
+  margin: auto;
+  width: min(30rem, calc(100vw - 2rem));
+  padding: 1.75rem;
+  border-radius: 1.25rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.bottle-dialog::backdrop {
+  background: rgb(4 10 20 / 0.72);
+  backdrop-filter: blur(6px);
+}
+.bottle-field {
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line);
+  background: rgb(255 255 255 / 0.04);
+  padding: 0.75rem 1rem;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color var(--dur-fast) ease;
+}
+.bottle-field:focus-visible {
+  border-color: var(--color-accent);
+}
+@media (max-width: 48rem) {
+  .bottle {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    margin-top: 2.5rem;
+  }
+}
+
+/* Exploded architecture: layers of a system floating apart in 3D */
+.arch-stage {
+  perspective: 80rem;
+}
+.arch-stack {
+  --g: 0;
+  --gap: 4.4rem;
+  position: relative;
+  width: min(17rem, 62vw);
+  aspect-ratio: 16 / 10;
+  transform: rotateX(58deg) rotateZ(-38deg);
+  transform-style: preserve-3d;
+}
+.arch-plate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 13%, rgb(8 12 18 / 0.82));
+  transform: translateZ(calc(var(--g) * var(--z) * var(--gap)));
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+.arch-plate.is-active {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 30%, rgb(8 12 18 / 0.82));
+  box-shadow: 0 0 2.5rem color-mix(in srgb, var(--c) 45%, transparent);
+}
+/* A vertical stream running down through every layer */
+.arch-flow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: calc(var(--g) * var(--n) * var(--gap));
+  transform-origin: top;
+  transform: rotateX(90deg);
+  background: repeating-linear-gradient(to top, var(--c) 0 0.5rem, transparent 0.5rem 1.1rem);
+  animation: arch-flow 0.9s linear infinite;
+}
+@keyframes arch-flow {
+  to { background-position: 0 1.1rem; }
+}
